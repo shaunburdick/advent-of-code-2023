@@ -62,7 +62,7 @@ where
 }
 
 #[cfg(test)]
-mod tests {
+mod tests_day_00 {
     use super::get_calories_by_elf;
 
     #[test]
