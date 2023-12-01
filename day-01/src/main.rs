@@ -78,8 +78,6 @@ fn get_calibration_number(s: String) -> Result<usize, impl Error> {
 /// In a string, converts any alpha numbers (one, two, three)
 /// into their numerical equivalent (1, 2, 3)
 ///
-/// NOTE: This isn't technically true, I need to refactor (if it's worth it)
-///
 /// Examples:
 /// - one2three -> 123
 /// - abtwocdeeightfg -> ab2cde8fg
@@ -87,15 +85,69 @@ fn get_calibration_number(s: String) -> Result<usize, impl Error> {
 /// Arguments:
 /// - s: The string to convert
 fn alpha_to_numeric(s: String) -> String {
-    s.replace("one", "o1e")
-        .replace("two", "t2o")
-        .replace("three", "t3e")
-        .replace("four", "f4r")
-        .replace("five", "f5e")
-        .replace("six", "s6x")
-        .replace("seven", "s7n")
-        .replace("eight", "e8t")
-        .replace("nine", "n9e")
+    let mut final_string = String::with_capacity(s.len());
+    let mut index = 0;
+    let mut include_char = true;
+
+    while index < s.len() {
+        // take a slice from index forward
+        let slice = &s[index..];
+
+        // Check if the slice starts with a number
+        if slice.starts_with("one") {
+            // if it does, push the digit onto the final string
+            final_string.push('1');
+            // advance the index the length of the number string minus 2
+            // -1 because we increase the index at the end of the loop
+            // -1 so we include the last letter in case its part of the next number
+            index += 1;
+            // indicate that we can skip including the next char, we are just checking
+            // to see if its part of a new number
+            // but its value has already been captured
+            include_char = false;
+        } else if slice.starts_with("two") {
+            final_string.push('2');
+            index += 1;
+            include_char = false;
+        } else if slice.starts_with("three") {
+            final_string.push('3');
+            index += 3;
+            include_char = false;
+        } else if slice.starts_with("four") {
+            final_string.push('4');
+            index += 2;
+            include_char = false;
+        } else if slice.starts_with("five") {
+            final_string.push('5');
+            index += 2;
+            include_char = false;
+        } else if slice.starts_with("six") {
+            final_string.push('6');
+            index += 1;
+            include_char = false;
+        } else if slice.starts_with("seven") {
+            final_string.push('7');
+            index += 3;
+            include_char = false;
+        } else if slice.starts_with("eight") {
+            final_string.push('8');
+            index += 3;
+            include_char = false;
+        } else if slice.starts_with("nine") {
+            final_string.push('9');
+            index += 2;
+            include_char = false;
+        } else if include_char {
+            final_string.push(slice.chars().next().unwrap());
+        } else {
+            // if we skipped the current char, we can start including the next ones
+            include_char = true;
+        }
+
+        index += 1;
+    }
+
+    final_string
 }
 
 // Yoinked from the "efficient" example on rust by example
@@ -133,13 +185,10 @@ mod tests_day_01 {
     fn test_number_alpha_to_numeric() {
         assert_eq!(
             alpha_to_numeric(String::from("onetwo3fourpickle")),
-            "o1et2o3f4rpickle"
+            "1234pickle"
         );
 
-        assert_eq!(
-            alpha_to_numeric(String::from("twone3eightwo")),
-            "t2o1e3e8t2o"
-        );
+        assert_eq!(alpha_to_numeric(String::from("twone3eightwo")), "21382");
     }
 
     #[test]
