@@ -50,21 +50,15 @@ enum ParseCalibrationError {
 fn get_calibration_number(s: String) -> Result<usize, impl Error> {
     let mut numbers: (Option<char>, Option<char>) = (None, None);
     for c in s.chars() {
-        if numbers.0.is_none() {
-            if c.is_ascii_digit() {
-                numbers.0.replace(c);
-            }
-        } else {
+        if numbers.0.is_none() && c.is_ascii_digit() {
+            numbers.0.replace(c);
             break;
         }
     }
 
     for c in s.chars().rev() {
-        if numbers.1.is_none() {
-            if c.is_ascii_digit() {
-                numbers.1.replace(c);
-            }
-        } else {
+        if numbers.1.is_none() && c.is_ascii_digit() {
+            numbers.1.replace(c);
             break;
         }
     }
