@@ -21,13 +21,11 @@ fn main() {
     // Read file from CLI arg
     if let Ok(lines) = read_lines(&args.input_file) {
         // Iterate over lines, converting alpha numbers to numbers, then getting the first and last
-        let numbers = lines
-            .into_iter()
-            .flatten()
-            .map(|line| get_calibration_number(alpha_to_numeric(line)));
+        let numbers =
+            lines.flat_map(|line| get_calibration_number(alpha_to_numeric(line.unwrap())));
 
         // Print the sum of all the numbers
-        println!("{:?}", numbers.flatten().sum::<usize>());
+        println!("{:?}", numbers.sum::<usize>());
     } else {
         eprintln!("Could not read file: {}", args.input_file.display());
         process::exit(1);
@@ -49,6 +47,8 @@ enum ParseCalibrationError {
 /// - s: The string to parse a calibration number from
 fn get_calibration_number(s: String) -> Result<usize, impl Error> {
     let mut numbers: (Option<char>, Option<char>) = (None, None);
+
+    // loop through the string, char by char until we find a digit
     for c in s.chars() {
         if numbers.0.is_none() && c.is_ascii_digit() {
             numbers.0.replace(c);
@@ -56,6 +56,7 @@ fn get_calibration_number(s: String) -> Result<usize, impl Error> {
         }
     }
 
+    // loop through the string in reverse, char by char until we find a digit
     for c in s.chars().rev() {
         if numbers.1.is_none() && c.is_ascii_digit() {
             numbers.1.replace(c);
@@ -65,11 +66,10 @@ fn get_calibration_number(s: String) -> Result<usize, impl Error> {
 
     match numbers {
         (Some(first), Some(second)) => {
-            let combined = format!("{}{}", first, second);
-            match combined.parse::<usize>() {
-                Ok(num) => Ok(num),
-                Err(_) => Err(ParseCalibrationError::InvalidNumber(combined)),
-            }
+            let combined = format!("{first}{second}");
+            combined
+                .parse::<usize>()
+                .map_err(|_| ParseCalibrationError::InvalidNumber(combined))
         }
         _ => Err(ParseCalibrationError::MissingDigit),
     }
@@ -86,67 +86,64 @@ fn get_calibration_number(s: String) -> Result<usize, impl Error> {
 /// - s: The string to convert
 fn alpha_to_numeric(s: String) -> String {
     let mut final_string = String::with_capacity(s.len());
-    let mut index = 0;
-    let mut include_char = true;
+    // The index of the next character to visit
+    let mut visit_index = 0;
 
-    while index < s.len() {
+    // The index of the next character to include in the final string
+    let mut include_index = 0;
+
+    // Indicate that we matched an alpha number representation
+    let mut matched: bool;
+
+    // The Alpha and Digit version of a number
+    let alpha_numbers = [
+        ("one", '1'),
+        ("two", '2'),
+        ("three", '3'),
+        ("four", '4'),
+        ("five", '5'),
+        ("six", '6'),
+        ("seven", '7'),
+        ("eight", '8'),
+        ("nine", '9'),
+    ];
+
+    while visit_index < s.len() {
         // take a slice from index forward
-        let slice = &s[index..];
+        let slice = &s[visit_index..];
+        // So far we haven't matched
+        matched = false;
 
-        // Check if the slice starts with a number
-        if slice.starts_with("one") {
-            // if it does, push the digit onto the final string
-            final_string.push('1');
-            // advance the index the length of the number string minus 2
-            // -1 because we increase the index at the end of the loop
-            // -1 so we include the last letter in case its part of the next number
-            index += 1;
-            // indicate that we can skip including the next char, we are just checking
-            // to see if its part of a new number
-            // but its value has already been captured
-            include_char = false;
-        } else if slice.starts_with("two") {
-            final_string.push('2');
-            index += 1;
-            include_char = false;
-        } else if slice.starts_with("three") {
-            final_string.push('3');
-            index += 3;
-            include_char = false;
-        } else if slice.starts_with("four") {
-            final_string.push('4');
-            index += 2;
-            include_char = false;
-        } else if slice.starts_with("five") {
-            final_string.push('5');
-            index += 2;
-            include_char = false;
-        } else if slice.starts_with("six") {
-            final_string.push('6');
-            index += 1;
-            include_char = false;
-        } else if slice.starts_with("seven") {
-            final_string.push('7');
-            index += 3;
-            include_char = false;
-        } else if slice.starts_with("eight") {
-            final_string.push('8');
-            index += 3;
-            include_char = false;
-        } else if slice.starts_with("nine") {
-            final_string.push('9');
-            index += 2;
-            include_char = false;
-        } else if include_char {
-            final_string.push(slice.chars().next().unwrap());
-        } else {
-            // if we skipped the current char, we can start including the next ones
-            include_char = true;
+        // for each alpha number tuple
+        for alpha_number in alpha_numbers {
+            if slice.starts_with(alpha_number.0) {
+                // add digit to final string
+                final_string.push(alpha_number.1);
+                // don't include the characters in the number
+                include_index = visit_index + alpha_number.0.len();
+                // visit the last character of the word
+                visit_index += alpha_number.0.len() - 1;
+                // we found a match!
+                matched = true;
+                break;
+            }
         }
 
-        index += 1;
+        // If we visited a char we should include, let's include it
+        if visit_index == include_index {
+            final_string.push(slice.chars().next().unwrap());
+            include_index += 1;
+        }
+
+        // if we didn't match anything, let's move to the next char
+        if !matched {
+            visit_index += 1;
+        }
     }
 
+    // We reserved memory for the worst case, we never found a number
+    // we can now release any memory we didn't use
+    final_string.shrink_to_fit();
     final_string
 }
 
