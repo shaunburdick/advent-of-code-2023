@@ -15,14 +15,18 @@ struct Cli {
 }
 
 fn main() {
+    // Get command line arguments
     let args = Cli::parse();
 
     // Read file from CLI arg
     if let Ok(lines) = read_lines(&args.input_file) {
+        // Iterate over lines, converting alpha numbers to numbers, then getting the first and last
         let numbers = lines
             .into_iter()
             .flatten()
             .map(|line| get_calibration_number(alpha_to_numeric(line)));
+
+        // Print the sum of all the numbers
         println!("{:?}", numbers.flatten().sum::<usize>());
     } else {
         eprintln!("Could not read file: {}", args.input_file.display());
@@ -38,11 +42,12 @@ enum ParseCalibrationError {
     InvalidNumber(String),
 }
 
+/// Given a string, it will get first and last ascii digits
+/// combine them, and parse them into an unsigned integer
+///
+/// Arguments:
+/// - s: The string to parse a calibration number from
 fn get_calibration_number(s: String) -> Result<usize, impl Error> {
-    // let num = s.chars().filter(|c| c.is_ascii_digit()).collect::<String>();
-    // println!("{}", num);
-
-    // num.parse::<usize>()
     let mut numbers: (Option<char>, Option<char>) = (None, None);
     for c in s.chars() {
         if numbers.0.is_none() {
@@ -76,6 +81,17 @@ fn get_calibration_number(s: String) -> Result<usize, impl Error> {
     }
 }
 
+/// In a string, converts any alpha numbers (one, two, three)
+/// into their numerical equivalent (1, 2, 3)
+///
+/// NOTE: This isn't technically true, I need to refactor (if it's worth it)
+///
+/// Examples:
+/// - one2three -> 123
+/// - abtwocdeeightfg -> ab2cde8fg
+///
+/// Arguments:
+/// - s: The string to convert
 fn alpha_to_numeric(s: String) -> String {
     s.replace("one", "o1e")
         .replace("two", "t2o")
@@ -86,54 +102,6 @@ fn alpha_to_numeric(s: String) -> String {
         .replace("seven", "s7n")
         .replace("eight", "e8t")
         .replace("nine", "n9e")
-    // // create a new final string
-    // let mut final_string = String::new();
-
-    // // create a buffer with max size of s
-    // let mut buffer = String::with_capacity(s.capacity());
-
-    // // iterate over s, adding char one at a time to buffer
-    // for char in s.chars() {
-    //     buffer.push(char);
-    //     // if next char is a digit, push buffer into final string, empty buffer
-    //     if char.is_ascii_digit() {
-    //         final_string.push_str(buffer.as_str());
-    //         buffer.clear();
-    //     } else {
-    //         // else check buffer for an alpha version of a number
-    //         let current_size = buffer.len();
-    //         buffer = buffer
-    //             .replace("one", "1")
-    //             .replace("two", "2")
-    //             .replace("three", "3")
-    //             .replace("four", "4")
-    //             .replace("five", "5")
-    //             .replace("six", "6")
-    //             .replace("seven", "7")
-    //             .replace("eight", "8")
-    //             .replace("nine", "9");
-
-    //         // if alpha version found, replace with number and push buffer into final string, empty buffer
-    //         if buffer.len() != current_size {
-    //             final_string.push_str(buffer.as_str());
-    //             buffer.clear();
-    //         }
-    //     }
-    // }
-
-    // // push any remaining values on the string
-    // if !buffer.is_empty() {
-    //     final_string.push_str(buffer.as_str());
-    // }
-
-    // println!(
-    //     "{},{},{}",
-    //     s,
-    //     final_string,
-    //     get_calibration_number(final_string.clone()).unwrap()
-    // );
-
-    // final_string
 }
 
 // Yoinked from the "efficient" example on rust by example
@@ -148,9 +116,7 @@ where
 
 #[cfg(test)]
 mod tests_day_01 {
-    use crate::alpha_to_numeric;
-
-    use super::get_calibration_number;
+    use super::{alpha_to_numeric, get_calibration_number};
 
     #[test]
     fn test_get_calibration_number() {
