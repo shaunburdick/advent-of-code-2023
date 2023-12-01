@@ -6,7 +6,8 @@ An attempt at [Advent of Code](https://adventofcode.com/2023) using [Rust 🦀](
 
 Each day will be setup as a separate item in the [Cargo Workspace](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html).
 
--   [Day 0](/day-0/) - Calorie Counting (2022 Day 1)
+-   [Day 0](/day-00/) - Calorie Counting (2022 Day 1)
+-   [Day 1](/day-01/) - Trebuchet?!
 
 ## Environment Setup
 
