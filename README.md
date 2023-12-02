@@ -8,6 +8,7 @@ Each day will be setup as a separate item in the [Cargo Workspace](https://doc.r
 
 -   [Day 0](/day-00/) - Calorie Counting (2022 Day 1)
 -   [Day 1](/day-01/) - Trebuchet?!
+-   [Day 2](/day-02/) - Cube Conundrum
 
 ## Environment Setup
 
