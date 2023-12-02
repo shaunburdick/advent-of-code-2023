@@ -24,7 +24,6 @@ fn main() {
 
     // Read file from CLI arg
     if let Ok(lines) = read_lines(&args.input_file) {
-        // Iterate over lines, parsing into games
         let id_sum = lines
             // convert to game
             .flat_map(|line| Game::from_str(line.unwrap().as_str()))
@@ -41,7 +40,36 @@ fn main() {
             })
             // reduce to sum of game ids
             .fold(0, |sum, game| sum + game.id);
-        println!("Game Sum: {}", id_sum);
+        println!("Part 1 Game Sum: {}", id_sum);
+    } else {
+        eprintln!("Could not read file: {}", args.input_file.display());
+        process::exit(1);
+    }
+
+    // Read file from CLI arg
+    if let Ok(lines) = read_lines(&args.input_file) {
+        let max_power = lines
+            // convert to game
+            .flat_map(|line| Game::from_str(line.unwrap().as_str()))
+            .fold(0, |power, game| {
+                let max_cubes = game.max_cubes();
+                let mut game_power = 1;
+                if max_cubes.0 > 0 {
+                    game_power *= max_cubes.0;
+                }
+
+                if max_cubes.1 > 0 {
+                    game_power *= max_cubes.1;
+                }
+
+                if max_cubes.2 > 0 {
+                    game_power *= max_cubes.2;
+                }
+
+                power + game_power
+            });
+
+        println!("Part 2 Max Power: {}", max_power);
     } else {
         eprintln!("Could not read file: {}", args.input_file.display());
         process::exit(1);
@@ -144,6 +172,29 @@ impl Game {
         self.rounds.push(round);
 
         self
+    }
+
+    /// Determine the max number of cubes needed for each color
+    ///
+    /// Returns a tuple representing (red, green, blue)
+    pub fn max_cubes(&self) -> (usize, usize, usize) {
+        let mut max_cubes = (0, 0, 0);
+
+        for round in &self.rounds {
+            if round.red > max_cubes.0 {
+                max_cubes.0 = round.red;
+            }
+
+            if round.green > max_cubes.1 {
+                max_cubes.1 = round.green;
+            }
+
+            if round.blue > max_cubes.2 {
+                max_cubes.2 = round.blue;
+            }
+        }
+
+        max_cubes
     }
 }
 
@@ -291,5 +342,33 @@ mod tests_day_02 {
                 ]
             }
         )
+    }
+
+    #[test]
+    fn game_max_cubes() {
+        let game_1 =
+            Game::from_str("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green").unwrap();
+        assert_eq!(game_1.max_cubes(), (4, 2, 6));
+
+        let game_2 =
+            Game::from_str("Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue")
+                .unwrap();
+        assert_eq!(game_2.max_cubes(), (1, 3, 4));
+
+        let game_3 = Game::from_str(
+            "Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red",
+        )
+        .unwrap();
+        assert_eq!(game_3.max_cubes(), (20, 13, 6));
+
+        let game_4 = Game::from_str(
+            "Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red",
+        )
+        .unwrap();
+        assert_eq!(game_4.max_cubes(), (14, 3, 15));
+
+        let game_5 =
+            Game::from_str("Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green").unwrap();
+        assert_eq!(game_5.max_cubes(), (6, 3, 2));
     }
 }
