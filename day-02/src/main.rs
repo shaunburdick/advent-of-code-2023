@@ -24,34 +24,16 @@ fn main() {
 
     // Read file from CLI arg
     if let Ok(lines) = read_lines(&args.input_file) {
-        let id_sum = lines
+        let (id_sum, max_power) = lines
             // convert to game
             .flat_map(|line| Game::from_str(line.unwrap().as_str()))
-            // filter out games that couldn't happen
-            .filter(|game| {
-                // Check each round, making sure not to go over the max allowed for each color
-                for round in &game.rounds {
-                    if round.red > MAX_RED || round.green > MAX_GREEN || round.blue > MAX_BLUE {
-                        return false;
-                    }
+            // fold into two values: (sum of ids, sum of game power)
+            .fold((0, 0), |mut acc, game| {
+                // check if game is above limit
+                if !game.above_limit((MAX_RED, MAX_GREEN, MAX_BLUE)) {
+                    acc.0 += game.id;
                 }
 
-                true
-            })
-            // reduce to sum of game ids
-            .fold(0, |sum, game| sum + game.id);
-        println!("Part 1 Game Sum: {}", id_sum);
-    } else {
-        eprintln!("Could not read file: {}", args.input_file.display());
-        process::exit(1);
-    }
-
-    // Read file from CLI arg
-    if let Ok(lines) = read_lines(&args.input_file) {
-        let max_power = lines
-            // convert to game
-            .flat_map(|line| Game::from_str(line.unwrap().as_str()))
-            .fold(0, |power, game| {
                 let max_cubes = game.max_cubes();
                 let mut game_power = 1;
                 if max_cubes.0 > 0 {
@@ -66,10 +48,15 @@ fn main() {
                     game_power *= max_cubes.2;
                 }
 
-                power + game_power
+                acc.1 += game_power;
+
+                acc
             });
 
-        println!("Part 2 Max Power: {}", max_power);
+        println!(
+            "Part 1 Game Sum: {}\nPart 2 Max Power: {}",
+            id_sum, max_power
+        );
     } else {
         eprintln!("Could not read file: {}", args.input_file.display());
         process::exit(1);
@@ -196,6 +183,21 @@ impl Game {
 
         max_cubes
     }
+
+    /// Check is the game requires more cubes than a limit
+    ///
+    /// Arguments:
+    /// - limit: A tuple of (red, green, blue) values that represent the max for that color
+    pub fn above_limit(&self, limit: (usize, usize, usize)) -> bool {
+        // Check each round, making sure not to go over the max allowed for each color
+        for round in &self.rounds {
+            if round.red > limit.0 || round.green > limit.1 || round.blue > limit.2 {
+                return true;
+            }
+        }
+
+        false
+    }
 }
 
 impl FromStr for Game {
@@ -276,7 +278,7 @@ mod tests_day_02 {
     use super::{Game, GameRound};
 
     #[test]
-    fn parse_gameround_from_str() {
+    fn parse_game_round_from_str() {
         assert_eq!(
             GameRound::from_str("3 blue, 4 red").unwrap(),
             GameRound {
