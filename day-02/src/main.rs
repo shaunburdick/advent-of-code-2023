@@ -31,24 +31,12 @@ fn main() {
             .fold((0, 0), |mut acc, game| {
                 // check if game is above limit
                 if !game.above_limit((MAX_RED, MAX_GREEN, MAX_BLUE)) {
+                    // add game id if not above limit
                     acc.0 += game.id;
                 }
 
-                let max_cubes = game.max_cubes();
-                let mut game_power = 1;
-                if max_cubes.0 > 0 {
-                    game_power *= max_cubes.0;
-                }
-
-                if max_cubes.1 > 0 {
-                    game_power *= max_cubes.1;
-                }
-
-                if max_cubes.2 > 0 {
-                    game_power *= max_cubes.2;
-                }
-
-                acc.1 += game_power;
+                // add the game's cube power
+                acc.1 += game.cube_power();
 
                 acc
             });
@@ -184,6 +172,32 @@ impl Game {
         max_cubes
     }
 
+    /// Calculate the "cube power"
+    ///
+    /// The power of a set of cubes is equal to the numbers of red, green, and
+    /// blue cubes multiplied together.
+    pub fn cube_power(&self) -> usize {
+        let max_cubes = self.max_cubes();
+        let mut cube_power = 1;
+
+        // Red
+        if max_cubes.0 > 0 {
+            cube_power *= max_cubes.0;
+        }
+
+        // Green
+        if max_cubes.1 > 0 {
+            cube_power *= max_cubes.1;
+        }
+
+        // Blue
+        if max_cubes.2 > 0 {
+            cube_power *= max_cubes.2;
+        }
+
+        cube_power
+    }
+
     /// Check is the game requires more cubes than a limit
     ///
     /// Arguments:
@@ -273,9 +287,8 @@ where
 
 #[cfg(test)]
 mod tests_day_02 {
+    use super::{Game, GameRound, MAX_BLUE, MAX_GREEN, MAX_RED};
     use std::str::FromStr;
-
-    use super::{Game, GameRound};
 
     #[test]
     fn parse_game_round_from_str() {
@@ -372,5 +385,61 @@ mod tests_day_02 {
         let game_5 =
             Game::from_str("Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green").unwrap();
         assert_eq!(game_5.max_cubes(), (6, 3, 2));
+    }
+
+    #[test]
+    fn game_cube_power() {
+        let game_1 =
+            Game::from_str("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green").unwrap();
+        assert_eq!(game_1.cube_power(), 48);
+
+        let game_2 =
+            Game::from_str("Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue")
+                .unwrap();
+        assert_eq!(game_2.cube_power(), 12);
+
+        let game_3 = Game::from_str(
+            "Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red",
+        )
+        .unwrap();
+        assert_eq!(game_3.cube_power(), 1560);
+
+        let game_4 = Game::from_str(
+            "Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red",
+        )
+        .unwrap();
+        assert_eq!(game_4.cube_power(), 630);
+
+        let game_5 =
+            Game::from_str("Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green").unwrap();
+        assert_eq!(game_5.cube_power(), 36);
+    }
+
+    #[test]
+    fn game_above_limit() {
+        let game_1 =
+            Game::from_str("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green").unwrap();
+        assert!(!game_1.above_limit((MAX_RED, MAX_GREEN, MAX_BLUE)));
+
+        let game_2 =
+            Game::from_str("Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue")
+                .unwrap();
+        assert!(!game_2.above_limit((MAX_RED, MAX_GREEN, MAX_BLUE)));
+
+        let game_3 = Game::from_str(
+            "Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red",
+        )
+        .unwrap();
+        assert!(game_3.above_limit((MAX_RED, MAX_GREEN, MAX_BLUE)));
+
+        let game_4 = Game::from_str(
+            "Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red",
+        )
+        .unwrap();
+        assert!(game_4.above_limit((MAX_RED, MAX_GREEN, MAX_BLUE)));
+
+        let game_5 =
+            Game::from_str("Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green").unwrap();
+        assert!(!game_5.above_limit((MAX_RED, MAX_GREEN, MAX_BLUE)));
     }
 }
