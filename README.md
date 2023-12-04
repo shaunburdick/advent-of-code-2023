@@ -10,6 +10,7 @@ Each day will be setup as a separate item in the [Cargo Workspace](https://doc.r
 -   [Day 1](/day-01/) - Trebuchet?!
 -   [Day 2](/day-02/) - Cube Conundrum
 -   [Day 3](/day-03/) - Gear Ratios
+-   [Day 4](/day-04/) - Scratchcards
 
 ## Environment Setup
 
