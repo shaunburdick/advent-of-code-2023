@@ -1,5 +1,7 @@
 use clap::Parser;
-use std::{fmt::Debug, fs::read_to_string, path::PathBuf, process, str::FromStr};
+use std::{
+    collections::HashMap, fmt::Debug, fs::read_to_string, path::PathBuf, process, str::FromStr,
+};
 
 use thiserror::Error;
 
@@ -22,7 +24,26 @@ fn main() {
             .collect::<Vec<ScratchOffCard>>();
 
         let part_1_answer = cards.iter().fold(0, |acc, card| acc + card.points());
-        let part_2_answer = 0;
+        let part_2_answer = cards
+            .iter()
+            .fold(HashMap::new(), |mut hash, card| {
+                // get current total
+                let total_current = hash.get(&card.id).unwrap_or(&0) + 1;
+
+                // set final total for current id
+                hash.insert(card.id, total_current);
+
+                // get winning cards
+                for won_id in card.won_ids() {
+                    // add cards to the count + number of current cards
+                    let total = hash.get(&won_id).unwrap_or(&0);
+                    hash.insert(won_id, total + total_current);
+                }
+
+                hash
+            })
+            .values()
+            .sum::<i32>(); // add up the values
 
         println!("Part 1: {}\nPart 2: {}", part_1_answer, part_2_answer);
     } else {
@@ -39,23 +60,36 @@ struct ScratchOffCard {
 }
 
 impl ScratchOffCard {
+    /// Calculates the IDs of the cards you win
+    pub fn won_ids(&self) -> Vec<usize> {
+        let matches = self.matching_numbers();
+
+        (0..matches.len())
+            .map(|index| self.id + index + 1)
+            .collect::<Vec<usize>>()
+    }
+
     /// Calculates the point value of the card
     ///
     /// To calculate the point value, you need to check for matching numbers between
     /// the winning numbers and the card numbers.
     /// The first match is worth 1 point, each additional match doubles the points
     pub fn points(&self) -> usize {
-        let matches = self
-            .card_numbers
-            .iter()
-            .filter(|num| self.winning_numbers.contains(num))
-            .collect::<Vec<&usize>>();
+        let matches = self.matching_numbers();
 
         if !matches.is_empty() {
             2_usize.pow(matches.len() as u32 - 1)
         } else {
             0
         }
+    }
+
+    /// Finds the numbers that match the winning numbers
+    pub fn matching_numbers(&self) -> Vec<&usize> {
+        self.card_numbers
+            .iter()
+            .filter(|num| self.winning_numbers.contains(num))
+            .collect::<Vec<&usize>>()
     }
 }
 
@@ -174,6 +208,51 @@ mod tests_day_03 {
     }
 
     #[test]
+    fn test_matching_numbers() {
+        assert_eq!(
+            ScratchOffCard::from_str("Card 1: 41 48 83 86 17 | 83 86 6 31 17 9 48 53")
+                .unwrap()
+                .matching_numbers(),
+            vec![&83, &86, &17, &48]
+        );
+
+        assert_eq!(
+            ScratchOffCard::from_str("Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19")
+                .unwrap()
+                .matching_numbers(),
+            vec![&61, &32]
+        );
+
+        assert_eq!(
+            ScratchOffCard::from_str("Card 3: 1 21 53 59 44 | 69 82 63 72 16 21 14 1")
+                .unwrap()
+                .matching_numbers(),
+            vec![&21, &1]
+        );
+
+        assert_eq!(
+            ScratchOffCard::from_str("Card 4: 41 92 73 84 69 | 59 84 76 51 58 5 54 83")
+                .unwrap()
+                .matching_numbers(),
+            vec![&84]
+        );
+
+        assert!(
+            ScratchOffCard::from_str("Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36")
+                .unwrap()
+                .matching_numbers()
+                .is_empty()
+        );
+
+        assert!(
+            ScratchOffCard::from_str("Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11")
+                .unwrap()
+                .matching_numbers()
+                .is_empty()
+        );
+    }
+
+    #[test]
     fn test_points() {
         assert_eq!(
             ScratchOffCard::from_str("Card 1: 41 48 83 86 17 | 83 86 6 31 17 9 48 53")
@@ -215,6 +294,16 @@ mod tests_day_03 {
                 .unwrap()
                 .points(),
             0
+        );
+    }
+
+    #[test]
+    fn test_won_ids() {
+        assert_eq!(
+            ScratchOffCard::from_str("Card 1: 41 48 83 86 17 | 83 86 6 31 17 9 48 53")
+                .unwrap()
+                .won_ids(),
+            vec![2, 3, 4, 5]
         );
     }
 }
