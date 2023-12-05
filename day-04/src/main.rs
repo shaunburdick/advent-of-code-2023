@@ -178,7 +178,7 @@ impl FromStr for ScratchOffCard {
 }
 
 #[cfg(test)]
-mod tests_day_03 {
+mod tests_day_04 {
     use std::str::FromStr;
 
     use super::ScratchOffCard;
