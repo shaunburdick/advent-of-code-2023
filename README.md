@@ -11,6 +11,7 @@ Each day will be setup as a separate item in the [Cargo Workspace](https://doc.r
 -   [Day 2](/day-02/) - Cube Conundrum
 -   [Day 3](/day-03/) - Gear Ratios
 -   [Day 4](/day-04/) - Scratchcards
+-   [Day 5](/day-05/) - If You Give A Seed A Fertilizer
 
 ## Environment Setup
 
