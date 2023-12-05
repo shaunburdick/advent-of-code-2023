@@ -56,13 +56,13 @@ impl SeedRelationRange {
 #[derive(Debug, Error)]
 enum ParseError {
     #[error("Unknown range format: {0}")]
-    UnknownRangeFormat(String),
+    Range(String),
     #[error("Unknown number format: {0}")]
-    UnknownNumberFormat(String),
+    Number(String),
     #[error("Unknown map title format: {0}")]
-    UnknownMapTitleFormat(String),
+    MapTitle(String),
     #[error("Unknown seed id format: {0}")]
-    UnknownSeedIdFormat(String),
+    SeedId(String),
 }
 
 impl FromStr for SeedRelationRange {
@@ -98,10 +98,10 @@ impl FromStr for SeedRelationRange {
                     range,
                 })
             } else {
-                Err(Self::Err::UnknownNumberFormat(String::from(s)))
+                Err(Self::Err::Number(String::from(s)))
             }
         } else {
-            Err(Self::Err::UnknownRangeFormat(String::from(s)))
+            Err(Self::Err::Range(String::from(s)))
         }
     }
 }
@@ -150,7 +150,7 @@ impl FromStr for SeedRelationTable {
         let mut lines = s.lines();
         let seed_line = lines.next();
         if seed_line.is_none() {
-            return Err(Self::Err::UnknownMapTitleFormat(String::new()));
+            return Err(Self::Err::MapTitle(String::new()));
         }
 
         let mut table = Self::default();
@@ -164,12 +164,10 @@ impl FromStr for SeedRelationTable {
                 table.from = String::from(from);
                 table.to = String::from(to);
             } else {
-                return Err(Self::Err::UnknownMapTitleFormat(String::from(title)));
+                return Err(Self::Err::MapTitle(String::from(title)));
             }
         } else {
-            return Err(Self::Err::UnknownMapTitleFormat(String::from(
-                seed_line.unwrap(),
-            )));
+            return Err(Self::Err::MapTitle(String::from(seed_line.unwrap())));
         }
 
         for line in lines {
@@ -198,7 +196,7 @@ impl Almanac {
                 num if num.parse::<usize>().is_ok() => {
                     self.seeds.push(num.parse::<usize>().unwrap());
                 }
-                _ => return Err(ParseError::UnknownSeedIdFormat(String::from(item))),
+                _ => return Err(ParseError::SeedId(String::from(item))),
             }
         }
 
