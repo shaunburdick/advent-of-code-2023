@@ -1,4 +1,6 @@
 use clap::Parser;
+use indicatif::ParallelProgressIterator;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::{collections::BTreeMap, fs::read_to_string, path::PathBuf, process, str::FromStr};
 
 use thiserror::Error;
@@ -16,14 +18,29 @@ fn main() {
     if let Ok(file) = read_to_string(&args.input_file) {
         let almanac = Almanac::from_str(&file).expect("almanac to parse");
 
-        let locations = almanac
+        let part_1_answer = almanac
             .seeds
             .iter()
             .flat_map(|seed| almanac.get_type_value(*seed, "location"))
-            .collect::<Vec<_>>();
+            .min()
+            .unwrap();
 
-        let part_1_answer = locations.iter().min().unwrap();
-        let part_2_answer = 1;
+        let part_2_answer = almanac
+            .seeds
+            .chunks(2)
+            .inspect(|chunk| {
+                println!("{} -> {}:", chunk[0], chunk[0] + chunk[1]);
+            })
+            .flat_map(|chunk| {
+                (chunk[0]..chunk[0] + chunk[1])
+                    .into_par_iter()
+                    .progress()
+                    .map(|seed_id| almanac.get_type_value(seed_id, "location"))
+                    .min()
+                    .unwrap()
+            })
+            .min()
+            .unwrap();
 
         println!("Part 1: {}\nPart 2: {}", part_1_answer, part_2_answer);
     } else {
