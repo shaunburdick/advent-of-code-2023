@@ -1,7 +1,16 @@
 use clap::Parser;
+use nom_supreme::ParserExt;
 use std::{fs::read_to_string, path::PathBuf, process};
 
-#[derive(Parser)]
+use nom::{
+    bytes::complete::is_not,
+    character::complete::{self, line_ending, space1},
+    multi::separated_list1,
+    sequence::separated_pair,
+    IResult, Parser as _,
+};
+
+#[derive(clap::Parser)]
 struct Cli {
     input_file: PathBuf,
 }
@@ -12,24 +21,8 @@ fn main() {
 
     // Read file from CLI arg
     if let Ok(file) = read_to_string(&args.input_file) {
-        let races = vec![
-            BoatRace {
-                time: 58,
-                distance: 434,
-            },
-            BoatRace {
-                time: 81,
-                distance: 1041,
-            },
-            BoatRace {
-                time: 96,
-                distance: 2219,
-            },
-            BoatRace {
-                time: 76,
-                distance: 1218,
-            },
-        ];
+        let (_, races) =
+            BoatRace::parse_races(file.as_str()).expect("input file to parse as races");
 
         let part_1_answer = races
             .iter()
@@ -51,13 +44,13 @@ fn main() {
 }
 
 struct BoatRace {
-    time: usize,
-    distance: usize,
+    time: u64,
+    distance: u64,
 }
 
 impl BoatRace {
     /// Calculate the winning holds for the race
-    fn winning_holds(&self) -> Vec<usize> {
+    fn winning_holds(&self) -> Vec<u64> {
         let mut winning_holds = vec![];
         let mut duration = 0;
 
@@ -72,6 +65,29 @@ impl BoatRace {
         }
 
         winning_holds
+    }
+
+    fn parse_races(s: &str) -> IResult<&str, Vec<Self>> {
+        /// Parse numbers from a string
+        fn nums(input: &str) -> IResult<&str, Vec<u64>> {
+            is_not("0123456789")
+                .precedes(separated_list1(space1, complete::u64))
+                .parse(input)
+        }
+
+        let (left_overs, (times, distances)) = separated_pair(nums, line_ending, nums).parse(s)?;
+
+        Ok((
+            left_overs,
+            times
+                .iter()
+                .zip(distances)
+                .map(|(time, distance)| BoatRace {
+                    time: *time,
+                    distance,
+                })
+                .collect(),
+        ))
     }
 }
 
