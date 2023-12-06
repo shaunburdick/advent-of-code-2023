@@ -1,7 +1,5 @@
 use clap::Parser;
-use std::{
-    collections::HashMap, fmt::Debug, fs::read_to_string, path::PathBuf, process, str::FromStr,
-};
+use std::{fs::read_to_string, path::PathBuf, process};
 
 #[derive(Parser)]
 struct Cli {
@@ -38,7 +36,12 @@ fn main() {
             .map(|race| race.winning_holds().len())
             .product::<usize>();
 
-        let part_2_answer = 1;
+        let part_2_answer = BoatRace {
+            time: 58_819_676,
+            distance: 434_104_122_191_218,
+        }
+        .winning_holds()
+        .len();
 
         println!("Part 1: {}\nPart 2: {}", part_1_answer, part_2_answer);
     } else {
