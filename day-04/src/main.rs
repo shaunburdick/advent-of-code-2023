@@ -5,8 +5,6 @@ use std::{
 
 use thiserror::Error;
 
-// use thiserror::Error;
-
 #[derive(Parser)]
 struct Cli {
     input_file: PathBuf,

@@ -423,6 +423,14 @@ impl Almanac {
     fn get_type_ranges(&self, range: SeedRange, type_name: &str) -> Vec<SeedRange> {
         let mut current_type = Some("seed");
         let mut final_ranges = vec![range];
+        eprintln!(
+            "Type {:?}: {:?}",
+            current_type.unwrap(),
+            &final_ranges
+                .iter()
+                .map(|r| (r.start, r.end))
+                .collect::<Vec<_>>()
+        );
 
         while current_type.is_some() {
             if let Some(table) = self.tables.get(current_type.unwrap()) {
@@ -434,6 +442,14 @@ impl Almanac {
                         .collect(),
                 );
                 current_type.replace(&table.to);
+                eprintln!(
+                    "Type {:?}: {:?}",
+                    current_type.unwrap(),
+                    &final_ranges
+                        .iter()
+                        .map(|r| (r.start, r.end))
+                        .collect::<Vec<_>>()
+                );
                 if current_type == Some(type_name) {
                     break;
                 }
@@ -668,6 +684,48 @@ humidity-to-location map:
         assert_eq!(
             almanac.get_type_ranges(SeedRange::new(82, 82), "location"),
             vec![SeedRange::new(46, 46)]
+        );
+
+        assert_eq!(
+            almanac.get_type_ranges(SeedRange::new(79, 93), "location"),
+            vec![
+                SeedRange {
+                    start: 46,
+                    num_values: 10,
+                    end: 55
+                },
+                SeedRange {
+                    start: 60,
+                    num_values: 1,
+                    end: 60
+                },
+                SeedRange {
+                    start: 82,
+                    num_values: 3,
+                    end: 84
+                }
+            ]
+        );
+
+        assert_eq!(
+            almanac.get_type_ranges(SeedRange::new(55, 67), "location"),
+            vec![
+                SeedRange {
+                    start: 56,
+                    num_values: 4,
+                    end: 59
+                },
+                SeedRange {
+                    start: 86,
+                    num_values: 4,
+                    end: 89
+                },
+                SeedRange {
+                    start: 94,
+                    num_values: 5,
+                    end: 98
+                }
+            ]
         );
     }
 
