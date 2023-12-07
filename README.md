@@ -12,6 +12,8 @@ Each day will be setup as a separate item in the [Cargo Workspace](https://doc.r
 -   [Day 3](/day-03/) - Gear Ratios
 -   [Day 4](/day-04/) - Scratchcards
 -   [Day 5](/day-05/) - If You Give A Seed A Fertilizer
+-   [Day 6](/day-06/) - Wait For It
+-   [Day 7](/day-07/) - Camel Cards
 
 ## Environment Setup
 
