@@ -59,8 +59,7 @@ impl Ord for CamelCardHand {
         match self.type_rank().cmp(&other.type_rank()) {
             std::cmp::Ordering::Equal => {
                 for (s_char, o_char) in self.cards.chars().zip(other.cards.chars()) {
-                    let order =
-                        CamelCardHand::card_rank(s_char).cmp(&CamelCardHand::card_rank(o_char));
+                    let order = Self::card_rank(s_char).cmp(&Self::card_rank(o_char));
                     if order != std::cmp::Ordering::Equal {
                         return order;
                     }
@@ -91,11 +90,23 @@ impl CamelCardHand {
 
     /// Get the hand type of a set of cards
     fn hand_type(cards: &str) -> CamelCardHandType {
-        let card_groups = cards.chars().fold(BTreeMap::new(), |mut map, card| {
+        let mut card_groups = cards.chars().fold(BTreeMap::new(), |mut map, card| {
             *(map.entry(card).or_insert(0)) += 1;
 
             map
         });
+
+        // if not all jokers
+        if cards != "JJJJJ" {
+            if let Some(joker_count) = card_groups.remove(&'J') {
+                let (biggest_key, biggest_value) = card_groups
+                    .iter()
+                    .max_by(|(_, a), (_, b)| a.cmp(b))
+                    .unwrap();
+
+                card_groups.insert(*biggest_key, biggest_value + joker_count);
+            }
+        }
 
         match card_groups.len() {
             1 => CamelCardHandType::FiveOfAKind,
@@ -137,16 +148,16 @@ impl CamelCardHand {
             'A' => 12,
             'K' => 11,
             'Q' => 10,
-            'J' => 9,
-            'T' => 8,
-            '9' => 7,
-            '8' => 6,
-            '7' => 5,
-            '6' => 4,
-            '5' => 3,
-            '4' => 2,
-            '3' => 1,
-            '2' => 0,
+            'J' => 0,
+            'T' => 9,
+            '9' => 8,
+            '8' => 7,
+            '7' => 6,
+            '6' => 5,
+            '5' => 4,
+            '4' => 3,
+            '3' => 2,
+            '2' => 1,
             _ => -1,
         }
     }
@@ -206,7 +217,7 @@ QQQJA 483";
             .map(|(index, hand)| hand.bid * (index as u32 + 1))
             .sum::<u32>();
 
-        assert_eq!(winnings, 6440);
+        assert_eq!(winnings, 5905);
     }
 
     #[test]
@@ -220,36 +231,46 @@ QQQJA 483";
     #[test]
     fn test_camel_card_hand_type() {
         assert_eq!(
-            CamelCardHand::hand_type("AAAAA"),
+            CamelCardHand::hand_type("AAJAA"),
             CamelCardHandType::FiveOfAKind
         );
 
         assert_eq!(
-            CamelCardHand::hand_type("AAAAJ"),
+            CamelCardHand::hand_type("JJJJJ"),
+            CamelCardHandType::FiveOfAKind
+        );
+
+        assert_eq!(
+            CamelCardHand::hand_type("AAJAK"),
             CamelCardHandType::FourOfAKind
         );
 
         assert_eq!(
-            CamelCardHand::hand_type("AAAJJ"),
+            CamelCardHand::hand_type("AAKAJ"),
+            CamelCardHandType::FourOfAKind
+        );
+
+        assert_eq!(
+            CamelCardHand::hand_type("AJAQQ"),
             CamelCardHandType::FullHouse
         );
 
         assert_eq!(
-            CamelCardHand::hand_type("AAAJK"),
+            CamelCardHand::hand_type("AATJK"),
             CamelCardHandType::ThreeOfAKind
         );
 
         assert_eq!(
-            CamelCardHand::hand_type("AAJJK"),
+            CamelCardHand::hand_type("AATTK"),
             CamelCardHandType::TwoPair
         );
 
         assert_eq!(
-            CamelCardHand::hand_type("AAJQK"),
+            CamelCardHand::hand_type("A4JQK"),
             CamelCardHandType::OnePair
         );
 
-        assert_eq!(CamelCardHand::hand_type("AKQJ9"), CamelCardHandType::High);
+        assert_eq!(CamelCardHand::hand_type("AKQ89"), CamelCardHandType::High);
     }
 
     #[test]
@@ -262,19 +283,25 @@ QQQJA 483";
 
         assert_eq!(
             CamelCardHand::new(String::from("AAAAA"), 123)
-                .cmp(&CamelCardHand::new(String::from("AAAAJ"), 123)),
+                .cmp(&CamelCardHand::new(String::from("AAAAK"), 123)),
             Ordering::Greater
         );
 
         assert_eq!(
             CamelCardHand::new(String::from("23456"), 123)
-                .cmp(&CamelCardHand::new(String::from("AAAAJ"), 123)),
+                .cmp(&CamelCardHand::new(String::from("AAAAK"), 123)),
             Ordering::Less
         );
 
         assert_eq!(
             CamelCardHand::new(String::from("AAAAQ"), 123)
-                .cmp(&CamelCardHand::new(String::from("AAAAJ"), 123)),
+                .cmp(&CamelCardHand::new(String::from("AAAAT"), 123)),
+            Ordering::Greater
+        );
+
+        assert_eq!(
+            CamelCardHand::new(String::from("AAAAQ"), 123)
+                .cmp(&CamelCardHand::new(String::from("JAAAK"), 123)),
             Ordering::Greater
         );
     }
