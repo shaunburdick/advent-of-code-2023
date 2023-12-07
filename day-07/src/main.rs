@@ -96,8 +96,9 @@ impl CamelCardHand {
             map
         });
 
-        // if not all jokers
-        if cards != "JJJJJ" {
+        // if not all jokers, remove the joker count and add it to the largest
+        // group of cards
+        if card_groups.len() > 1 {
             if let Some(joker_count) = card_groups.remove(&'J') {
                 let (biggest_key, biggest_value) = card_groups
                     .iter()
@@ -180,7 +181,7 @@ impl FromStr for CamelCardHand {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if let Some((cards, bid)) = s.split_once(' ') {
             if let Ok(bid) = bid.parse::<u32>() {
-                Ok(CamelCardHand::new(String::from(cards), bid))
+                Ok(Self::new(String::from(cards), bid))
             } else {
                 Err(Self::Err::Number(String::from(bid)))
             }
