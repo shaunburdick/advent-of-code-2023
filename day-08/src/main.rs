@@ -1,11 +1,12 @@
 use clap::Parser;
 use nom::{
     bytes::complete::tag,
-    character::complete::{alpha1, char},
+    character::complete::{alphanumeric1, char},
     error::Error,
     sequence::{preceded, separated_pair, terminated},
     Finish, IResult,
 };
+use num::integer::lcm;
 use std::{
     collections::BTreeMap, fmt::Debug, fs::read_to_string, path::PathBuf, process, str::FromStr,
 };
@@ -22,10 +23,17 @@ fn main() {
     // Read file from CLI arg
     if let Ok(file) = read_to_string(&args.input_file) {
         let haunted_wasteland =
-            HauntedWasteland::from_str(file.as_str()).expect("Haunted Wasteland to be formated");
+            HauntedWasteland::from_str(file.as_str()).expect("Haunted Wasteland to be formatted");
 
         let part_1_answer = haunted_wasteland.turns("AAA", "ZZZ").len();
-        let part_2_answer = 1;
+
+        let part_2_answer = haunted_wasteland
+            .map
+            .nodes
+            .keys()
+            .filter(|key| key.ends_with('A'))
+            .map(|node| haunted_wasteland.turns_ends_with(node, 'Z').len())
+            .fold(1, lcm);
 
         println!("Part 1: {}\nPart 2: {}", part_1_answer, part_2_answer);
     } else {
@@ -43,12 +51,12 @@ struct HauntedNode {
 
 fn parse_haunted_node(s: &str) -> IResult<&str, (&str, (&str, &str))> {
     separated_pair(
-        alpha1,
+        alphanumeric1,
         tag(" = "),
         separated_pair(
-            preceded(char('('), alpha1),
+            preceded(char('('), alphanumeric1),
             tag(", "),
-            terminated(alpha1, char(')')),
+            terminated(alphanumeric1, char(')')),
         ),
     )(s)
 }
@@ -168,6 +176,38 @@ impl HauntedWasteland {
 
         turns
     }
+
+    fn turns_ends_with(&self, from: &str, target: char) -> Vec<char> {
+        let mut turns = Vec::new();
+
+        let mut current = self.map.nodes.get(from);
+        for turn in self.directions.to_iter() {
+            match turn {
+                HauntedDirection::Left => {
+                    turns.push('L');
+                    if let Some(c) = current {
+                        if c.left.ends_with(target) {
+                            return turns;
+                        } else {
+                            current = self.map.nodes.get(&c.left);
+                        }
+                    }
+                }
+                HauntedDirection::Right => {
+                    turns.push('R');
+                    if let Some(c) = current {
+                        if c.right.ends_with(target) {
+                            return turns;
+                        } else {
+                            current = self.map.nodes.get(&c.right);
+                        }
+                    }
+                }
+            }
+        }
+
+        turns
+    }
 }
 
 impl FromStr for HauntedWasteland {
@@ -198,6 +238,8 @@ impl FromStr for HauntedWasteland {
 mod tests_day_08 {
     use std::{collections::BTreeMap, str::FromStr};
 
+    use num::integer::lcm;
+
     use super::{HauntedDirections, HauntedMap, HauntedNode, HauntedWasteland};
 
     #[test]
@@ -217,6 +259,15 @@ mod tests_day_08 {
                 id: String::from("BBB"),
                 left: String::from("DDD"),
                 right: String::from("EEE")
+            })
+        );
+
+        assert_eq!(
+            HauntedNode::from_str("111 = (22D, EE8)"),
+            Ok(HauntedNode {
+                id: String::from("111"),
+                left: String::from("22D"),
+                right: String::from("EE8")
             })
         );
     }
@@ -303,5 +354,32 @@ ZZZ = (ZZZ, ZZZ)",
             haunted_wasteland.turns("AAA", "ZZZ"),
             vec!['L', 'L', 'R', 'L', 'L', 'R',]
         );
+    }
+
+    #[test]
+    fn test_multi_node() {
+        let haunted_wasteland = HauntedWasteland::from_str(
+            "LR
+
+11A = (11B, XXX)
+11B = (XXX, 11Z)
+11Z = (11B, XXX)
+22A = (22B, XXX)
+22B = (22C, 22C)
+22C = (22Z, 22Z)
+22Z = (22B, 22B)
+XXX = (XXX, XXX)",
+        )
+        .unwrap();
+
+        let turns = haunted_wasteland
+            .map
+            .nodes
+            .keys()
+            .filter(|key| key.ends_with('A'))
+            .map(|node| haunted_wasteland.turns_ends_with(node, 'Z').len())
+            .fold(1, lcm);
+
+        assert_eq!(turns, 6);
     }
 }
