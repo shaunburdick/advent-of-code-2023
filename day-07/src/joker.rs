@@ -1,6 +1,11 @@
+use nom::{
+    bytes::complete::is_a,
+    character::complete::{space1, u32},
+    error::Error,
+    sequence::separated_pair,
+    Finish, IResult,
+};
 use std::{collections::BTreeMap, str::FromStr};
-
-use thiserror::Error;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum CamelCardHandType {
@@ -130,29 +135,23 @@ impl CamelCardHand {
     }
 }
 
-#[derive(Debug, Error)]
-pub enum ParseError {
-    #[error("Unknown hand format: {0}")]
-    Hand(String),
-    #[error("Unknown number format: {0}")]
-    Number(String),
+fn parse_hand(s: &str) -> IResult<&str, (&str, u32)> {
+    separated_pair(is_a("AKQJT98765432"), space1, u32)(s)
 }
 
 impl FromStr for CamelCardHand {
-    type Err = ParseError;
+    type Err = Error<String>;
 
     /// Parse a hand from a hand/bid pairing
     ///
     /// Example: "222JJ 123" -> CamelCardHand { hand: "222JJ", bid: 123 }
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if let Some((cards, bid)) = s.split_once(' ') {
-            if let Ok(bid) = bid.parse::<u32>() {
-                Ok(Self::new(String::from(cards), bid))
-            } else {
-                Err(Self::Err::Number(String::from(bid)))
-            }
-        } else {
-            Err(Self::Err::Hand(String::from(s)))
+        match parse_hand(s).finish() {
+            Ok((_remaining, (cards, bid))) => Ok(Self::new(String::from(cards), bid)),
+            Err(Error { input, code }) => Err(Error {
+                input: input.to_string(),
+                code,
+            }),
         }
     }
 }
