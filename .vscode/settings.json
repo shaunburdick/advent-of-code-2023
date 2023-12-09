@@ -1,5 +1,9 @@
 {
   "rust-analyzer.linkedProjects": [
     "./day-01/Cargo.toml"
+  ],
+  "cSpell.words": [
+    "itertools",
+    "rstest"
   ]
 }
