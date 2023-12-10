@@ -23,11 +23,18 @@ To setup your environment:
 
 1. [Install](https://www.rust-lang.org/learn/get-started) Rust
 2. Install [Rust Analyzer](https://rust-analyzer.github.io/) in your favorite IDE
-3. Clone this repository
-4. Be Merry! 🎄
+3. Install [Just](https://github.com/casey/just): `cargo install just`
+4. Install [Cargo Generate](https://github.com/cargo-generate/cargo-generate): `cargo install cargo-generate`
+5. Clone this repository
+6. Create a new day from template: `just create day-X`
+7. Be Merry! 🎄
 
 ## Testing
 
 To run tests for all days, run `cargo test --workspace`
 
-To run tests for an individual day X, run `cargo test -p day-X`
+To run tests for an individual day X, run `just test day-X`
+
+## Thanks
+
+-   [Christopher Biscardi](https://github.com/ChristopherBiscardi) for his [videos](https://www.youtube.com/@chrisbiscardi) and repository [setup](https://github.com/ChristopherBiscardi/advent-of-code/tree/main/2023/rust)
