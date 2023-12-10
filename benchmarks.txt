@@ -1,0 +1,8 @@
+# Benchmarks
+
+## Benchmarks run on 2021 M1 MacBook Pro, 16GB RAM
+
+day_09_bench  fastest       │ slowest       │ median        │ mean          │ samples │ iters
+├─ part1      238.5 µs      │ 765.1 µs      │ 395.5 µs      │ 415.1 µs      │ 100     │ 100
+╰─ part2      270 µs        │ 345.4 µs      │ 294.3 µs      │ 299.7 µs      │ 100     │ 100
+

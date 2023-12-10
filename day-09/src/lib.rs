@@ -1,41 +1,23 @@
-use clap::Parser;
-use std::{fs::read_to_string, path::PathBuf, process};
-
-#[derive(clap::Parser)]
-struct Cli {
-    input_file: PathBuf,
+pub fn process_part1(file: &str) -> isize {
+    file.lines()
+        .map(|line| {
+            line.split_ascii_whitespace()
+                .flat_map(|digit| digit.parse::<isize>())
+                .collect::<Vec<_>>()
+        })
+        .map(|seq| sequence_next_number(seq.to_owned()))
+        .sum::<isize>()
 }
 
-fn main() {
-    // Get command line arguments
-    let args = Cli::parse();
-
-    // Read file from CLI arg
-    if let Ok(file) = read_to_string(&args.input_file) {
-        let numbers = file
-            .lines()
-            .map(|line| {
-                line.split_ascii_whitespace()
-                    .flat_map(|digit| digit.parse::<isize>())
-                    .collect::<Vec<_>>()
-            })
-            .collect::<Vec<_>>();
-
-        let part_1_answer = numbers
-            .iter()
-            .map(|seq| sequence_next_number(seq.to_owned()))
-            .sum::<isize>();
-
-        let part_2_answer = numbers
-            .iter()
-            .map(|seq| sequence_previous_number(seq.to_owned()))
-            .sum::<isize>();
-
-        println!("Part 1: {}\nPart 2: {}", part_1_answer, part_2_answer);
-    } else {
-        eprintln!("Could not read file: {}", args.input_file.display());
-        process::exit(1);
-    }
+pub fn process_part2(file: &str) -> isize {
+    file.lines()
+        .map(|line| {
+            line.split_ascii_whitespace()
+                .flat_map(|digit| digit.parse::<isize>())
+                .collect::<Vec<_>>()
+        })
+        .map(|seq| sequence_previous_number(seq.to_owned()))
+        .sum::<isize>()
 }
 
 /// Generate the next number in a sequence from a list of numbers
@@ -108,7 +90,7 @@ fn sequence_previous_number(numbers: Vec<isize>) -> isize {
 }
 
 #[cfg(test)]
-mod tests_day_9 {
+mod tests_day_09 {
     use super::{sequence_next_number, sequence_previous_number};
     use rstest::rstest;
 
