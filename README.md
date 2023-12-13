@@ -16,6 +16,7 @@ Each day will be setup as a separate item in the [Cargo Workspace](https://doc.r
 -   [Day 7](/day-07/) - Camel Cards
 -   [Day 8](/day-08/) - Haunted Wasteland
 -   [Day 9](/day-09/) - Mirage Maintenance
+-   [Day 10](/day-19/) - Mirage Pipe Maze
 
 ## Environment Setup
 

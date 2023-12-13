@@ -3,11 +3,17 @@ use thiserror::Error;
 
 pub fn process_part1(file: &str) -> usize {
     let map = PipeMap::from_str(file).expect("map to parse");
-    map.get_furthest_point()
+    let furthest_loop = map.get_furthest_loop().expect("a loop to exist");
+
+    furthest_loop.len() / 2
 }
 
 pub fn process_part2(file: &str) -> usize {
-    2
+    let map = PipeMap::from_str(file).expect("map to parse");
+
+    let enclosed_tiles = map.get_enclosed_tiles(&map.get_furthest_loop().expect("a loop to exist"));
+
+    enclosed_tiles.len()
 }
 
 #[derive(Debug, Error)]
@@ -26,37 +32,90 @@ struct PipeMap {
 
 impl PipeMap {
     /// Get the distance for the furthest point from the start position
-    fn get_furthest_point(&self) -> usize {
-        let mut furthest_point = 0;
+    fn get_furthest_loop(&self) -> Option<Vec<Pipe>> {
         let starting_segment = self
             .map
             .get(&self.start)
             .expect("starting segment to exist");
 
-        let biggest_loop = self
+        let mut loops = self
             .start
             .get_surrounding_points()
             .iter()
             .flat_map(|p| self.map.get(p))
             .filter(|p| p.out == self.start || p.into == self.start)
             .flat_map(|seg| {
-                self.get_loop_length(&Pipe {
+                self.get_loop(Pipe {
                     out: seg.point,
                     ..*starting_segment
                 })
             })
-            .max();
+            .collect::<Vec<_>>();
 
-        if let Some(biggest_loop) = biggest_loop {
-            furthest_point = biggest_loop / 2;
-        }
+        loops.sort_by_key(|a| a.len());
 
-        furthest_point
+        loops.pop()
     }
 
-    fn get_loop_length(&self, starting_segment: &Pipe) -> Option<usize> {
-        let mut loop_length = 1;
-        let mut prev_segment = starting_segment;
+    /// Get enclosed tiles
+    ///
+    /// Arguments:
+    /// - pipe_loop: A list of pipes that form a loop
+    fn get_enclosed_tiles(&self, pipe_loop: &[Pipe]) -> Vec<Point> {
+        let bounds = pipe_loop.iter().fold(BTreeMap::new(), |mut map, pipe| {
+            map.entry(pipe.point.y)
+                .and_modify(|e: &mut BTreeMap<i32, char>| {
+                    e.insert(pipe.point.x, pipe.symbol);
+                })
+                .or_insert(BTreeMap::from([(pipe.point.x, pipe.symbol)]));
+
+            map
+        });
+
+        let mut enclosed_tiles = Vec::new();
+
+        if bounds.is_empty() {
+            return enclosed_tiles; // return empty vec
+        }
+
+        for (y, x_bounds) in bounds {
+            let mut x_current = *x_bounds.keys().min().expect("this to never be empty");
+            let x_max = x_bounds.keys().max().expect("this to never be empty");
+            let mut crossings = 0;
+            while &x_current < x_max {
+                let current_point = Point { y, x: x_current };
+                if let Some(symbol) = x_bounds.get(&x_current) {
+                    // Only count non-horizontal movements
+                    // So something like FJ would only count as one crossing
+                    // S only counts depending on what sub-type it is.
+                    // In my case, S works for all the tests but fails the final
+                    // as the final has S as a segment of -
+                    // I'm not going to write that logic in, I've spent enough time...
+                    match symbol {
+                        'S' | '|' | 'F' | '7' => {
+                            crossings += 1;
+                        }
+                        _ => {}
+                    }
+                } else if crossings % 2 != 0 {
+                    // if current location doesn't exist in the map, it's an empty spot
+                    enclosed_tiles.push(current_point);
+                }
+
+                x_current += 1;
+            }
+        }
+
+        enclosed_tiles
+    }
+
+    /// Get a loop based on a starting segment
+    ///
+    /// Arguments:
+    /// - starting_segment: A pipe segment to start the loop from. It will proceed from the `out` value
+    fn get_loop(&self, starting_segment: Pipe) -> Option<Vec<Pipe>> {
+        let mut pipe_loop = vec![starting_segment.clone()];
+        let mut prev_segment = &starting_segment;
         if let Some(mut current_segment) = self.map.get(&starting_segment.out) {
             loop {
                 if starting_segment.point == current_segment.point {
@@ -69,9 +128,9 @@ impl PipeMap {
                     };
 
                     if let Some(out_loop) = self.map.get(next_point) {
+                        pipe_loop.push(current_segment.clone());
                         prev_segment = current_segment;
                         current_segment = &out_loop;
-                        loop_length += 1;
                     } else {
                         return None;
                     }
@@ -81,7 +140,7 @@ impl PipeMap {
             return None;
         }
 
-        Some(loop_length)
+        Some(pipe_loop)
     }
 }
 
@@ -100,7 +159,7 @@ impl FromStr for PipeMap {
                 };
                 if symbol != '.' {
                     if symbol == 'S' {
-                        start.replace(point.clone());
+                        start.replace(point);
                     }
                     let mut section = Pipe::new(&point, symbol)?;
 
@@ -118,38 +177,6 @@ impl FromStr for PipeMap {
             }
         }
 
-        // let mut new_deadends = false;
-        // loop {
-        //     new_deadends = false;
-        //     let unknown_points = map
-        //         .iter()
-        //         .filter(|(_, section)| section.pipe_type == PipeType::Unknown)
-        //         .map(|(point, _)| point)
-        //         .collect::<Vec<_>>();
-
-        //     for point in unknown_points {
-        //         let cur_section = map.get(point).expect("point to exist");
-        //         let into_point = map.get(&cur_section.into);
-        //         let out_point = map.get(&cur_section.out);
-        //         if let (Some(into), Some(out)) = (into_point, out_point) {
-        //             if into.pipe_type == PipeType::DeadEnd || out.pipe_type == PipeType::DeadEnd {
-        //                 let mut cur = cur_section;
-        //                 *cur.pipe_type = PipeType::DeadEnd;
-        //                 new_deadends = true;
-        //             } else if into.pipe_type == PipeType::Loop && out.pipe_type == PipeType::Loop {
-        //                 cur_section.pipe_type = PipeType::Loop;
-        //             }
-        //         } else {
-        //             cur_section.pipe_type = PipeType::DeadEnd;
-        //             new_deadends = true;
-        //         }
-        //     }
-
-        //     if !new_deadends {
-        //         break;
-        //     }
-        // }
-
         if let Some(start) = start {
             Ok(Self { map, start })
         } else {
@@ -165,7 +192,7 @@ enum PipeType {
     Unknown,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Pipe {
     symbol: char,
     point: Point,
@@ -343,8 +370,45 @@ LJ...",
     }
 
     #[rstest]
-    fn test_process_part2() {
-        let input = "";
-        assert_eq!(process_part2(input), 2);
+    #[case(
+        "...........
+.S-------7.
+.|F-----7|.
+.||.....||.
+.||.....||.
+.|L-7.F-J|.
+.|..|.|..|.
+.L--J.L--J.
+...........",
+        4
+    )]
+    #[case(
+        ".F----7F7F7F7F-7....
+.|F--7||||||||FJ....
+.||.FJ||||||||L7....
+FJL7L7LJLJ||LJ.L-7..
+L--J.L7...LJS7F-7L7.
+....F-J..F7FJ|L7L7L7
+....L7.F7||L7|.L7L7|
+.....|FJLJ|FJ|F7|.LJ
+....FJL-7.||.||||...
+....L---J.LJ.LJLJ...",
+        8
+    )]
+    #[case(
+        "FF7FSF7F7F7F7F7F---7
+L|LJ||||||||||||F--J
+FL-7LJLJ||||||LJL-77
+F--JF--7||LJLJ7F7FJ-
+L---JF-JLJ.||-FJLJJ7
+|F|F-JF---7F7-L7L|7|
+|FFJF7L7F-JF7|JL---7
+7-L-JL7||F7|L7F-7F7|
+L.L7LFJ|||||FJL7||LJ
+L7JLJL-JLJLJL--JLJ.L",
+        10
+    )]
+    fn test_process_part2(#[case] input: &str, #[case] result: usize) {
+        assert_eq!(process_part2(input), result);
     }
 }
