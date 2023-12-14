@@ -18,6 +18,7 @@ Each day will be setup as a separate item in the [Cargo Workspace](https://doc.r
 -   [Day 9](/day-09/) - Mirage Maintenance
 -   [Day 10](/day-10/) - Mirage Pipe Maze
 -   [Day 11](/day-11/) - Cosmic Expansion
+-   [Day 12](/day-12/) - Hot Springs
 
 ## Environment Setup
 

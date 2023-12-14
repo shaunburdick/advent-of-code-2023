@@ -13,3 +13,8 @@ day_10_bench  fastest       │ slowest       │ median        │ mean        
 day_11_bench  fastest       │ slowest       │ median        │ mean          │ samples │ iters
 ├─ part1      6.098 ms      │ 7.064 ms      │ 6.206 ms      │ 6.264 ms      │ 100     │ 100
 ╰─ part2      6.161 ms      │ 6.685 ms      │ 6.315 ms      │ 6.354 ms      │ 100     │ 100
+
+# Brute Force - Part 1
+day_12_bench  fastest       │ slowest       │ median        │ mean          │ samples │ iters
+├─ part1      2.217 s       │ 2.331 s       │ 2.248 s       │ 2.254 s       │ 100     │ 100
+╰─ part2      1.032 ns      │ 3.33 ns       │ 1.052 ns      │ 1.112 ns      │ 100     │ 409600

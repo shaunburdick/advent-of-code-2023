@@ -115,6 +115,7 @@ impl FromStr for SkyMap {
 
 #[derive(Debug)]
 struct Galaxy {
+    #[allow(dead_code)] // This is useful for debugging
     id: usize,
     row: usize,
     col: usize,
