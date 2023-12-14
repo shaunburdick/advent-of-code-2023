@@ -7,15 +7,16 @@ use itertools::Itertools;
 
 pub fn process_part1(file: &str) -> usize {
     let sky = SkyMap::from_str(file).expect("file to be a sky map");
-    let distances = sky.shortest_distances();
-
-    distances
+    sky.shortest_distances(2)
         .iter()
         .fold(0, |acc, (_, _, distance)| acc + distance)
 }
 
 pub fn process_part2(file: &str) -> usize {
-    2
+    let sky = SkyMap::from_str(file).expect("file to be a sky map");
+    sky.shortest_distances(1_000_000)
+        .iter()
+        .fold(0, |acc, (_, _, distance)| acc + distance)
 }
 
 #[derive(Debug)]
@@ -26,7 +27,7 @@ struct SkyMap {
 }
 
 impl SkyMap {
-    fn shortest_distances(&self) -> Vec<(&Galaxy, &Galaxy, usize)> {
+    fn shortest_distances(&self, multiplier: usize) -> Vec<(&Galaxy, &Galaxy, usize)> {
         let mut distances = Vec::new();
 
         self.galaxies.iter().combinations(2).for_each(|combo| {
@@ -36,32 +37,36 @@ impl SkyMap {
                 Galaxy {
                     id: 0,
                     col: combo[0].col
-                        + self
+                        + (self
                             .empty_cols
                             .iter()
                             .filter(|col| col < &&combo[0].col)
-                            .count(),
+                            .count()
+                            * (multiplier - 1)),
                     row: combo[0].row
-                        + self
+                        + (self
                             .empty_rows
                             .iter()
                             .filter(|row| row < &&combo[0].row)
-                            .count(),
+                            .count()
+                            * (multiplier - 1)),
                 }
-                .distance(&Galaxy {
+                .distance_between(&Galaxy {
                     id: 1,
                     col: combo[1].col
-                        + self
+                        + (self
                             .empty_cols
                             .iter()
                             .filter(|col| col < &&combo[1].col)
-                            .count(),
+                            .count()
+                            * (multiplier - 1)),
                     row: combo[1].row
-                        + self
+                        + (self
                             .empty_rows
                             .iter()
                             .filter(|row| row < &&combo[1].row)
-                            .count(),
+                            .count()
+                            * (multiplier - 1)),
                 }),
             ))
         });
@@ -116,7 +121,8 @@ struct Galaxy {
 }
 
 impl Galaxy {
-    fn distance(&self, other: &Self) -> usize {
+    /// Calculate the distance between two galaxies
+    fn distance_between(&self, other: &Self) -> usize {
         self.row.abs_diff(other.row) + self.col.abs_diff(other.col)
     }
 }
@@ -125,7 +131,7 @@ impl Galaxy {
 mod tests_day_11 {
     use rstest::rstest;
 
-    use super::{process_part1, process_part2};
+    use super::{process_part1, SkyMap};
 
     #[rstest]
     #[case(
@@ -146,8 +152,44 @@ mod tests_day_11 {
     }
 
     #[rstest]
-    fn test_process_part2() {
-        let input = "";
-        assert_eq!(process_part2(input), 2);
+    #[case(
+        "...#......
+.......#..
+#.........
+..........
+......#...
+.#........
+.........#
+..........
+.......#..
+#...#.....",
+        10,
+        1030
+    )]
+    #[case(
+        "...#......
+.......#..
+#.........
+..........
+......#...
+.#........
+.........#
+..........
+.......#..
+#...#.....",
+        100,
+        8410
+    )]
+    fn test_process_part2(#[case] input: &str, #[case] multiplier: usize, #[case] result: usize) {
+        use std::str::FromStr;
+
+        let sky = SkyMap::from_str(input).expect("file to be a sky map");
+
+        assert_eq!(
+            sky.shortest_distances(multiplier)
+                .iter()
+                .fold(0, |acc, (_, _, distance)| acc + distance),
+            result
+        );
     }
 }
