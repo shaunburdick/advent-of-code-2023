@@ -18,3 +18,8 @@ day_11_bench  fastest       │ slowest       │ median        │ mean        
 day_12_bench  fastest       │ slowest       │ median        │ mean          │ samples │ iters
 ├─ part1      2.217 s       │ 2.331 s       │ 2.248 s       │ 2.254 s       │ 100     │ 100
 ╰─ part2      1.032 ns      │ 3.33 ns       │ 1.052 ns      │ 1.112 ns      │ 100     │ 409600
+
+# Parallel Lines - Part 1
+day_12_bench  fastest       │ slowest       │ median        │ mean          │ samples │ iters
+├─ part1      293.9 ms      │ 366.3 ms      │ 320.5 ms      │ 324.1 ms      │ 100     │ 100
+╰─ part2      1.473 ns      │ 1.626 ns      │ 1.484 ns      │ 1.493 ns      │ 100     │ 409600

@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use itertools::{repeat_n, Itertools};
+use rayon::prelude::*;
 
 use nom::{
     bytes::complete::tag,
@@ -12,7 +13,7 @@ use nom::{
 };
 
 pub fn process_part1(file: &str) -> usize {
-    file.lines()
+    file.par_lines()
         .map(|line| {
             let row = SpringRow::from_str(line).expect("line to parse");
             row.get_possible_arrangements().len()
